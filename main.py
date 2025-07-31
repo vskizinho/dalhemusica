@@ -6,7 +6,6 @@ from discord.ext import commands
 from asyncio import Lock, to_thread
 from keep_alive import keep_alive
 
-# Carregue variáveis de ambiente em produção
 DISCORD_TOKEN = os.environ['discordkey']
 FFMPEG_PATH = os.getenv("FFMPEG_PATH", "ffmpeg")
 
@@ -21,7 +20,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
         'noplaylist': True,
         'quiet': True,
         'default_search': 'auto',
-        'source_address': '0.0.0.0',
+        'source_address': '127.0.0.1',  # Melhor para host externo tipo Render
         'force-ipv4': True,
         'prefer_ffmpeg': True,
     }
@@ -33,20 +32,24 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
     @classmethod
     async def create(cls, search: str):
-        def extract():
-            with yt_dlp.YoutubeDL(cls.YTDL_OPTS) as ydl:
-                return ydl.extract_info(search, download=False)
-        info = await to_thread(extract)
-        if 'entries' in info:
-            info = info['entries'][0]
-        source = discord.FFmpegPCMAudio(info['url'], executable=FFMPEG_PATH)
-        return cls(source, data=info)
+        await asyncio.sleep(2)  # previne rate limiting
+        try:
+            def extract():
+                with yt_dlp.YoutubeDL(cls.YTDL_OPTS) as ydl:
+                    return ydl.extract_info(search, download=False)
+            info = await to_thread(extract)
+            if 'entries' in info:
+                info = info['entries'][0]
+            source = discord.FFmpegPCMAudio(info['url'], executable=FFMPEG_PATH)
+            return cls(source, data=info)
+        except Exception as e:
+            raise Exception(f"Falha ao extrair info com yt_dlp: {e}")
 
 # Módulo de Música
 class MusicPlayer(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.queues = {}  # guild_id → list[YTDLSource]
+        self.queues = {}
         self.lock = Lock()
 
     async def ensure_queue(self, guild_id):
@@ -57,7 +60,6 @@ class MusicPlayer(commands.Cog):
             ffmpeg_process = getattr(vc.source, "_process", None)
             if ffmpeg_process and ffmpeg_process.poll() is None:
                 ffmpeg_process.kill()
-                print("🔪 ffmpeg process morto.")
         except Exception as e:
             print(f"Erro ao matar ffmpeg: {e}")
 
@@ -70,8 +72,9 @@ class MusicPlayer(commands.Cog):
         source = queue.pop(0)
 
         def after_play(err):
+            if err:
+                print(f"Erro ao tocar a música: {err}")
             ctx.bot.loop.create_task(self.play_next(ctx))
-
 
         try:
             await self.kill_ffmpeg(ctx.voice_client)
@@ -124,7 +127,6 @@ class MusicPlayer(commands.Cog):
             ctx.voice_client.play(source, after=_after)
             await ctx.send(f"▶️ A tocar esta merda: **{source.title}**")
 
-
     @commands.command(name="skip")
     async def cmd_skip(self, ctx):
         vc = ctx.voice_client
@@ -174,5 +176,4 @@ async def on_ready():
     print(f"{bot.user} está online!")
 
 keep_alive()
-
 bot.run(DISCORD_TOKEN)
