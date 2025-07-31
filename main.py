@@ -7,7 +7,7 @@ from asyncio import Lock, to_thread
 from keep_alive import keep_alive
 
 # Carregue variáveis de ambiente em produção
-TOKEN = os.getenv("DISCORD_TOKEN") or "ODgxOTE0MTMyMTQyNjI0ODM4.GDYK-b.OYQzbx0cvzDVPElpz5eMgiq2t01JmPf24p1nZE"
+DISCORD_TOKEN = os.environ['discordkey']
 FFMPEG_PATH = os.getenv("FFMPEG_PATH", "ffmpeg")
 
 intents = discord.Intents.default()
@@ -175,4 +175,4 @@ async def on_ready():
 
 keep_alive()
 
-bot.run(TOKEN)
+bot.run(DISCORD_TOKEN)
