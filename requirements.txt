@@ -2,3 +2,5 @@ discord.py
 yt-dlp
 PyNaCl
 flask
+asyncio
+Thread
