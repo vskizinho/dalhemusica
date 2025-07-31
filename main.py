@@ -85,7 +85,7 @@ class MusicPlayer(commands.Cog):
         if not ctx.author.voice:
             return await ctx.send("❌ Conecte-se a uma chamada burro.")
         await ctx.author.voice.channel.connect()
-        await ctx.send(f"🔊 Entrei em: **{ctx.author.voice.channel}**")
+        await ctx.send(f"🔊 Boas putas como tamos? estou na sala: **{ctx.author.voice.channel}**")
 
     @commands.command(name="disconnect")
     async def cmd_leave(self, ctx):
@@ -94,7 +94,7 @@ class MusicPlayer(commands.Cog):
             return await ctx.send("❌ Não estou em nenhuma chamada otário do caralho.")
         await self.kill_ffmpeg(vc)
         await vc.disconnect()
-        await ctx.send("👋 Desconectado.")
+        await ctx.send("👋 Fui com as putas bro.")
 
     @commands.command(name="play")
     async def cmd_play(self, ctx, *, query: str):
@@ -157,7 +157,7 @@ class MusicPlayer(commands.Cog):
         if not vc or not vc.is_paused():
             return await ctx.send("❌ Nada para retomar otário.")
         vc.resume()
-        await ctx.send("▶️ Retomado.")
+        await ctx.send("▶️ Recomecei esta merda caralho.")
 
 # Bot principal
 class MyBot(commands.Bot):
